@@ -1,7 +1,8 @@
-from .utils import separarEstados, formatearTransicion, transicionEsNoDeterminista
+from .utils import separar_estados, formatear_transicion, transicion_es_no_determinista
+from .reader import obtener_columnas_matriz
 
-def unionEstadosTransiciones(estado_compuesto, transiciones, diccionario_transiciones):
-    lista_estados = separarEstados(estado_compuesto)
+def union_estados_transiciones(estado_compuesto, transiciones, diccionario_transiciones):
+    lista_estados = separar_estados(estado_compuesto)
     result = []
 
     for transicion in transiciones:
@@ -15,12 +16,12 @@ def unionEstadosTransiciones(estado_compuesto, transiciones, diccionario_transic
                     nuevaTransicion += q
                     break
 
-        result.append((transicion, formatearTransicion(nuevaTransicion)))
+        result.append((transicion, formatear_transicion(nuevaTransicion)))
 
     return result
 
-def transformarAutomataDeterministico(matriz, transiciones, diccionario_estados, diccionario_transiciones):
-    columnas = len(matriz[0]) if len(matriz) > 0 else 0
+def transformar_automata_deterministico(matriz, lista_transiciones, diccionario_estados, diccionario_transiciones):
+    columnas = obtener_columnas_matriz(matriz)
     matriz_output = [fila.copy() for fila in matriz]
     estados_procesados = {fila[0] for fila in matriz_output}
 
@@ -28,16 +29,16 @@ def transformarAutomataDeterministico(matriz, transiciones, diccionario_estados,
     while i < len(matriz_output):
         for j in range(1, columnas-1):
             estado_actual = matriz_output[i][j]
-            if transicionEsNoDeterminista(estado_actual):
-                result = unionEstadosTransiciones(estado_actual, transiciones, diccionario_transiciones)
-                nuevo_estado_compuesto = ",".join(sorted(separarEstados(estado_actual)))
+            if transicion_es_no_determinista(estado_actual):
+                result = union_estados_transiciones(estado_actual, lista_transiciones, diccionario_transiciones)
+                nuevo_estado_compuesto = ",".join(sorted(separar_estados(estado_actual)))
 
                 if nuevo_estado_compuesto not in estados_procesados:
-                    nuevoEstado = [formatearTransicion(nuevo_estado_compuesto)]
+                    nuevoEstado = [formatear_transicion(nuevo_estado_compuesto)]
                     nuevoEstado.append(result[0][1])
                     nuevoEstado.append(result[1][1])
 
-                    F = any(diccionario_estados[estado] for estado in separarEstados(nuevo_estado_compuesto))
+                    F = any(diccionario_estados[estado] for estado in separar_estados(nuevo_estado_compuesto))
                     nuevoEstado.append(int(F))
 
                     matriz_output.append(nuevoEstado)
@@ -47,11 +48,8 @@ def transformarAutomataDeterministico(matriz, transiciones, diccionario_estados,
 
     return matriz_output
 
-def eliminarEstadosInalcanzables(matriz_output, columnas):
-    # Asumamos que el estado inicial es el que está en matriz_output[1][0]
+def eliminar_estados_inalcanzables(matriz_output, columnas):
     estado_inicial = matriz_output[1][0]
-
-    # Set para almacenar los estados alcanzables
     alcanzables = set()
     alcanzables.add(estado_inicial)
 
